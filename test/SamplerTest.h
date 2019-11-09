@@ -14,9 +14,13 @@ FakeSensor * fakeSensors[2];
 class FakeSensor {
 public:
   int pin;
+  int id;
   int aquireCount;
   bool hasWritten;
-  FakeSensor(int pin = 0) : pin(pin), aquireCount(0), hasWritten(false){
+  FakeSensor(int pin = 0, int id = 0) : pin(pin),
+   id(id),
+   aquireCount(0),
+   hasWritten(false){
     if(!SamplerTest::fakeSensors[pin]){
       SamplerTest::fakeSensors[pin] = this;
     }
@@ -31,7 +35,8 @@ public:
 
   void writeValueToBuffer(char * buffer){
     buffer[0] = pin + '0';
-    for(int i = 1; i<RPL::SCM_PACKET_LEN; i++){
+    buffer[1] = id + '0';
+    for(int i = 2; i<RPL::SCM_PACKET_LEN; i++){
       buffer[i] = aquireCount + '0';
     }
     this->hasWritten = true;
@@ -51,7 +56,7 @@ MU_TEST(sampler_outputs_values_every_period){
 
   mu_assert_int_eq(RPL::SCM_PACKET_LEN, Settings::FCB_STREAM->writeIndex);
   Settings::FCB_STREAM->writeBuffer[RPL::SCM_PACKET_LEN] = '\0';
-  const char* expectedPacket = "011111111111";
+  const char* expectedPacket = "001111111111";
   mu_assert_string_eq(expectedPacket, Settings::FCB_STREAM->writeBuffer);
 
   fakeSensors[0]->hasWritten = false;
@@ -79,7 +84,7 @@ MU_TEST(sampler_aquires_values_every_period){
   Mocks::setMillis(20);
   sampler.tick();
   mu_assert_int_eq(RPL::SCM_PACKET_LEN, Settings::FCB_STREAM->writeIndex);
-  mu_assert_int_eq('0' + 20,  Settings::FCB_STREAM->writeBuffer[1]);
+  mu_assert_int_eq('0' + 20,  Settings::FCB_STREAM->writeBuffer[2]);
 
 }
 
@@ -101,7 +106,7 @@ MU_TEST(sampler_aquires_values_every_period_half_rate){
   Mocks::setMillis(20);
   sampler.tick();
   mu_assert_int_eq(RPL::SCM_PACKET_LEN, Settings::FCB_STREAM->writeIndex);
-  mu_assert_int_eq('2',  Settings::FCB_STREAM->writeBuffer[1]);
+  mu_assert_int_eq('2',  Settings::FCB_STREAM->writeBuffer[2]);
 
 }
 
@@ -125,7 +130,26 @@ MU_TEST(sampler_aquires_values_every_period_second_cycle){
   Mocks::setMillis(40);
   sampler.tick();
   mu_assert_int_eq(RPL::SCM_PACKET_LEN, Settings::FCB_STREAM->writeIndex);
-  mu_assert_int_eq('0' + 20,  Settings::FCB_STREAM->writeBuffer[1]);
+  mu_assert_int_eq('0' + 20,  Settings::FCB_STREAM->writeBuffer[2]);
+}
+
+MU_TEST(sampler_has_is_associated_with_sensors){
+  const int mapping[] = {0, 2};
+  Sampler<FakeSensor, 2> sampler(10, 2, mapping);
+  MockSerial::resetSerials();
+  Mocks::setAnalogWrite(0, 10);
+  Mocks::setAnalogWrite(1, 10);
+  Mocks::setMillis(0);
+  sampler.tick();
+  mu_assert_int_eq(0, fakeSensors[0]->aquireCount);
+  Mocks::setMillis(11);
+  sampler.tick();
+
+  mu_assert_int_eq(RPL::SCM_PACKET_LEN*2, Settings::FCB_STREAM->writeIndex);
+  Settings::FCB_STREAM->writeBuffer[RPL::SCM_PACKET_LEN*2] = '\0';
+  const char* expectedPacket = "001111111111211111111111";
+  mu_assert_string_eq(expectedPacket, Settings::FCB_STREAM->writeBuffer);
+
 }
 
 MU_TEST_SUITE(sampler_test){
@@ -133,6 +157,7 @@ MU_TEST_SUITE(sampler_test){
   MU_RUN_TEST(sampler_aquires_values_every_period);
   MU_RUN_TEST(sampler_aquires_values_every_period_half_rate);
   MU_RUN_TEST(sampler_aquires_values_every_period_second_cycle);
+  MU_RUN_TEST(sampler_has_is_associated_with_sensors);
 }
 }
 }

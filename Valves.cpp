@@ -5,6 +5,9 @@
 using namespace RPL;
 
 void Valves::updateValveState(SCMPacket &packet){
+  if(!packet.isValid()){
+    return;
+  }
   int offset = packet.getId()[1] - '0';
   offset *= 5;
 

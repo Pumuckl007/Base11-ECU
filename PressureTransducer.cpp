@@ -3,7 +3,8 @@
 
 using namespace RPL;
 
-PressureTransducer::PressureTransducer(int id) :
+PressureTransducer::PressureTransducer(int pin, int id) :
+pin(pin),
 id(id),
 sum(0),
 accumulatorCount(0){
@@ -37,7 +38,7 @@ int PressureTransducer::writeValueToBuffer(char buffer[]){
 }
 
 void PressureTransducer::aquire(){
-  this->sum += analogRead(this->id);
+  this->sum += analogRead(this->pin);
   this->accumulatorCount ++;
 }
 

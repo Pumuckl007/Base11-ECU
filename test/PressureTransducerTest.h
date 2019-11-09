@@ -36,7 +36,7 @@ namespace RPL {
       char buf[20];
       ZERO_MEM(buf);
       const char * expectedPacket = "P0,00010,57;";
-      PressureTransducer pt(0);
+      PressureTransducer pt(0, 0);
       Mocks::setAnalogWrite(0, 10);
       pt.aquire();
       mu_assert_int_eq(10, pt.writeValueToBuffer(buf));
@@ -48,7 +48,7 @@ namespace RPL {
       char buf[20];
       ZERO_MEM(buf);
       const char * expectedPacket = "P1,00011,59;";
-      PressureTransducer pt(1);
+      PressureTransducer pt(1, 1);
       Mocks::setAnalogWrite(1, 11);
       pt.aquire();
       mu_assert_int_eq(11, pt.writeValueToBuffer(buf));
@@ -60,7 +60,7 @@ namespace RPL {
       char buf[20];
       ZERO_MEM(buf);
       const char * expectedPacket = "PB,01023,80;";
-      PressureTransducer pt(11);
+      PressureTransducer pt(11, 0xB);
       Mocks::setAnalogWrite(11, 1023);
       pt.aquire();
       mu_assert_int_eq(1023, pt.writeValueToBuffer(buf));
@@ -96,6 +96,18 @@ namespace RPL {
       mu_assert_int_eq(0, pt.writeValueToBuffer(buf));
     }
 
+    MU_TEST(pt_uses_id_rather_than_pin_for_writing){
+      Mocks::resetPins();
+      char buf[20];
+      ZERO_MEM(buf);
+      const char * expectedPacket = "PA,01023,79;";
+      PressureTransducer pt(11, 0xA);
+      Mocks::setAnalogWrite(11, 1023);
+      pt.aquire();
+      mu_assert_int_eq(1023, pt.writeValueToBuffer(buf));
+      mu_assert_string_eq(expectedPacket, buf);
+    }
+
     MU_TEST_SUITE(pressure_transducer_test){
       MU_RUN_TEST(pt_reads_value_via_analog_read);
       MU_RUN_TEST(pt_discriminates_differnt_pins);
@@ -105,6 +117,7 @@ namespace RPL {
       MU_RUN_TEST(pt_reports_const_value_when_aquire_same_twice);
       MU_RUN_TEST(pt_reports_average_value_when_aquire_differing);
       MU_RUN_TEST(pt_reports_zero_with_no_aquires);
+      MU_RUN_TEST(pt_uses_id_rather_than_pin_for_writing);
     }
   }
 }

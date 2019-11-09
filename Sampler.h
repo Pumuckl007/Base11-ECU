@@ -16,7 +16,7 @@ public:
     sampleRate(oversampleRate),
     sampleCount(0){
     for(int i = 0; i<sensorCount; i++){
-      sensors[i] = Sensor(sensorMapings[i]);
+      sensors[i] = Sensor(sensorMapings[i], i);
     }
   };
 

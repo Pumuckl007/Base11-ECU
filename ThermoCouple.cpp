@@ -11,7 +11,7 @@ ThermoCouple::ThermoCouple(int id) : ThermoCouple(id, Settings::TC_PIN_MAP[id]){
 
 }
 
-ThermoCouple::ThermoCouple(int id, int csPin) : ThermoCouple(id,
+ThermoCouple::ThermoCouple(int csPin, int id) : ThermoCouple(id,
   Settings::TC_CLK_PIN, csPin, Settings::TC_DO_PIN){
 }
 
@@ -48,7 +48,14 @@ float ThermoCouple::writeValueToBuffer(char buffer[]){
 void ThermoCouple::writeFloatToBuffer(float toWrite, char buffer[]){
   int decimalLeftShifts = 0;
   int maxValue = 10000;
-  for(decimalLeftShifts = 0; decimalLeftShifts<5; decimalLeftShifts++){
+  int shiftCount = 5;
+  bool negative = toWrite < 0;
+  toWrite = negative ? -toWrite : toWrite;
+  if(negative){
+    maxValue /= 10;
+    shiftCount --;
+  }
+  for(decimalLeftShifts = 0; decimalLeftShifts<shiftCount; decimalLeftShifts++){
     if(toWrite >= (maxValue - 0.5 / (10000 / maxValue))){
       break;
     }
@@ -71,8 +78,12 @@ void ThermoCouple::writeFloatToBuffer(float toWrite, char buffer[]){
       buffer[4-i] = '.';
       continue;
     }
-    buffer[4-i] = '0' + fixedPointInt%10;
+    char delta = abs(fixedPointInt%10);
+    buffer[4-i] = '0' + delta;
     fixedPointInt /= 10;
+  }
+  if(negative){
+    buffer[0] = '-';
   }
 }
 

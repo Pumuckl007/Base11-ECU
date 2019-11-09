@@ -76,7 +76,17 @@ namespace RPL {
       for(size_t i = 0; i<Settings::VALVE_MAP_LEN; i++){
         mu_assert_int_eq(OUTPUT, Mocks::getPinmode(Settings::VALVE_MAP[i]));
       }
+    }
 
+    MU_TEST(valves_not_toggled_when_bad_checksum){
+      Mocks::resetPins();
+      SCMPacket packet("V0,11011,00;", 12);
+      Valves::updateValveState(packet);
+      mu_assert_int_eq(LOW, Mocks::getDigitalPin(Settings::VALVE_MAP[0]));
+      mu_assert_int_eq(LOW, Mocks::getDigitalPin(Settings::VALVE_MAP[1]));
+      mu_assert_int_eq(LOW, Mocks::getDigitalPin(Settings::VALVE_MAP[2]));
+      mu_assert_int_eq(LOW, Mocks::getDigitalPin(Settings::VALVE_MAP[3]));
+      mu_assert_int_eq(LOW, Mocks::getDigitalPin(Settings::VALVE_MAP[4]));
     }
 
     MU_TEST_SUITE(valves_test){
@@ -85,6 +95,7 @@ namespace RPL {
       MU_RUN_TEST(valves_in_block_toggled_off_when_packet_recived);
       MU_RUN_TEST(valves_are_not_badly_toggled_off);
       MU_RUN_TEST(valve_init_sets_pin_modes);
+      MU_RUN_TEST(valves_not_toggled_when_bad_checksum);
     }
   }
 }

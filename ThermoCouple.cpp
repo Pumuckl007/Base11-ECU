@@ -7,7 +7,7 @@ ThermoCouple::ThermoCouple():ThermoCouple(0){
 
 }
 
-ThermoCouple::ThermoCouple(int id) : ThermoCouple(id, Settings::TC_CS_MAP[id]){
+ThermoCouple::ThermoCouple(int id) : ThermoCouple(id, Settings::TC_PIN_MAP[id]){
 
 }
 
